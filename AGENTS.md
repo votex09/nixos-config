@@ -7,8 +7,9 @@ is here. For the rest, `grep -n` CLAUDE.md for the section; don't read it whole.
 
 NixOS flake for two machines: **eclipse** (desktop, RX 9070 XT) and **legion**
 (laptop, hybrid AMD/NVIDIA). Nixpkgs unstable, home-manager, Niri WM, Dux Shell
-(formerly DankMaterialShell, still called DMS in the code), Stylix theming
-(Catppuccin Mocha). Run `hostname` before anything machine-specific.
+(formerly DankMaterialShell, still called DMS in the code), colours from DMS's
+matugen (default Catppuccin Mocha), fonts and cursor from Stylix. Run `hostname`
+before anything machine-specific.
 
 ## Rules
 
@@ -25,9 +26,16 @@ Numbered as in CLAUDE.md, so a skill's "CLAUDE.md rule N" is rule N here.
    the task didn't ask you to remove, including comments, commented-out code and
    disabled options. Changing code under a comment? Update the comment, keep it.
 4. **Public repo.** No passwords, API keys, tokens or secrets.
-5. **Stylix owns theming.** Never set colours, fonts, font sizes, theme presets or
-   wallpaper in a module, including an app's own settings (`theme = "purple"`,
-   `fontWeight`). Leave them at the app's default or enable its Stylix target.
+5. **DMS's matugen owns colours; Stylix owns fonts and cursor.** Never set colours,
+   fonts, font sizes, theme presets or wallpaper in a module, including an app's
+   own settings (`theme = "purple"`, `fontWeight`). An app's colours come from a
+   matugen template: an entry under `matugen.templates` (option in
+   `modules/theme/matugen.nix`; the entry sits there or in the app's module), with
+   the template in `modules/theme/matugen/` or beside the module. The app's config
+   includes the rendered file, which must stay a plain file, never a home-manager
+   link. Fonts come from
+   `config.stylix.fonts`. Name a CSS template `.css.matugen`: its `{{ }}`
+   placeholders run Zed's biome out of memory.
 6. **Commits** use Conventional Commits, `type(scope): subject` plus a bullet body;
    load the `commit` skill. Commit without asking; never push, amend or rebase.
    **Commit once, when the task is finished and checked**, not after each edit,
@@ -44,6 +52,12 @@ Numbered as in CLAUDE.md, so a skill's "CLAUDE.md rule N" is rule N here.
 10. **No memory files.** If something is worth remembering, propose the line for
     CLAUDE.md or this file and let the user decide.
 11. **`rm` takes literal absolute paths**, one deletion per command, never `$VAR`.
+
+## Starting a task
+
+Any task with more than two steps, a read-only audit included, starts with a todo
+list made with the `todowrite` tool (not a file), one item per file or step. Tick
+items off as you go; after a compaction, it's where you pick up.
 
 ## Finishing a task
 
@@ -114,9 +128,11 @@ this, in thinking and in tool calls alike:
 128K tokens, about 27K of it taken by tool definitions. Long tasks get compacted
 and whatever only lived in context is lost.
 
-- **Start every multi-step task with a todo list** (`todowrite`), one item per file
-  or step. After a compaction, read the list and run
-  `git status --short && git diff --stat`; don't re-read files to catch up.
+- **After a compaction**, read the todo list (see **Starting a task**) and run
+  `git status --short && git diff --stat`. Re-read only what you'll quote.
+- **After a compaction, the summary is not a source.** Before quoting a value, a
+  default or a `file:line` in your answer, re-read that line (`grep -n`) and quote
+  what the file says. A file the summary names may not exist: check it.
 - **Never read a large file whole.** `README.md` and `CLAUDE.md` (~40 KB each):
   `grep -n` the lines, then read that range with offset and limit. Same for any
   file over ~300 lines.
@@ -257,11 +273,12 @@ steps.
 | `vn-setup`, `rpgm-setup` | Upscaling a visual novel or RPG Maker game |
 | `moku-bump` | Updating or repairing Moku/Tsunagu |
 | `android-debloat-redo` | Tablet debloat after an OTA |
+| `pr-review` | Reviewing a pull request, or "the PRs" |
 | `flake-update` | Only when the user runs `/flake-update`; never on your own |
 
 - `<skill-dir>` is `modules/home/programs/ai/skills/<name>`.
 - A step that hands work to a subagent is yours to do: for
-  `public-repo-auditor`, read `git diff --cached` for personal data, private
+  `public-repo-auditor` (only when the user asks), read `git diff --cached` for personal data, private
   paths, hostnames and tokens; for `prose-reviewer`, cut words from what you
   wrote; for `docs-drift-auditor`, grep the docs for the paths and names you
   changed; for `build-triager`, run

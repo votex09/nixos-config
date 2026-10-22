@@ -36,14 +36,15 @@
   '';
   cmd = model: args: lib.concatStringsSep " " ([launch "'${model.dir}'" "'${model.match}'" "--port \${PORT}"] ++ args);
 
-  #--- A coding or chat model. One slot gets the whole context; q8_0 cache halves
-  #--- its VRAM. Each ID gets its variant's sampling over whatever the client sent;
+  #--- A coding or chat model. One slot gets the whole context; a q8_0 cache halves
+  #--- its VRAM unless the model sets `cache`. Each ID gets its variant's sampling over
+  #--- whatever the client sent;
   #--- the -instruct and -chat keys also register as aliases, so they need no reload
   serve = id: model: {
     ${id} = {
       ttl = 600;
       cmd =
-        cmd model (["-c ${toString model.context}" "-np 1" "-fa on" "-ctk q8_0" "-ctv q8_0" "--no-webui"]
+        cmd model (["-c ${toString model.context}" "-np 1" "-fa on" "-ctk ${model.cache or "q8_0"}" "-ctv ${model.cache or "q8_0"}" "--no-webui"]
           ++ model.args);
       filters.setParamsByID =
         {${id} = model.think;}
@@ -54,6 +55,8 @@
 
   #--- Loads on the first request, unloads after `ttl` idle seconds to free VRAM
   settings = {
+    # Lists the -instruct and -chat aliases in /v1/models, so Open WebUI shows them
+    includeAliasesInList = true;
     models =
       lib.concatMapAttrs serve (codes // chats)
       // lib.optionalAttrs (edit != null) {

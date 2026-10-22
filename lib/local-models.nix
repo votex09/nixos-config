@@ -15,15 +15,30 @@
   #--- parameters llama-swap forces on <name> and its <name>-instruct and <name>-chat
   #--- aliases, so all three share one loaded model
   #--- --load-mode none: experts in RAM read into memory, not paged in from the file
+  #--- `cache`, optional: the KV cache type in place of q8_0
   code = {
     #--- MoE, 3B active; 10 of its 40 layers keep a KV cache, so 128K is ~1.4GB
-    "qwen3.6-35b-a3b" = {
-      name = "Qwen3.6 35B A3B (Q3)";
+    "qwen3.6-35b-a3b-q4" = {
+      name = "Qwen3.6 35B A3B (Q4)";
       dir = "unsloth/Qwen3.6-35B-A3B-GGUF";
-      match = "*UD-Q3_K_XL*.gguf";
+      match = "*UD-Q4_K_XL*.gguf";
       context = 131072;
-      # Experts of 18 layers from RAM: ~15GB VRAM (20 measured 80-85%, 37-39 tok/s)
-      args = ["-ngl 99" "--load-mode none" "--n-cpu-moe 18" "-ub 2048" "--top-k 20" "--min-p 0"];
+      # f16 cache: q8_0's error weighs more with only 10 KV layers at long context
+      cache = "f16";
+      # Experts of 22 layers from RAM, to make room for the f16 cache (18 with q8_0
+      # reached 98% VRAM). The reasoning budget cuts a thinking loop off; the
+      # message is Qwen's own. Prompt cache in RAM halved from 8GB: RAM reached 88%
+      args = [
+        "-ngl 99"
+        "--load-mode none"
+        "--n-cpu-moe 22"
+        "-ub 2048"
+        "--top-k 20"
+        "--min-p 0"
+        "--reasoning-budget 8192"
+        "--cache-ram 4096"
+        "--reasoning-budget-message 'Considering the limited time by the user, I have to give the solution based on the thinking directly now.'"
+      ];
       # Qwen's general-chat sampling, for Open WebUI
       chat = {
         temperature = 1.0;
@@ -31,35 +46,12 @@
         presence_penalty = 1.5;
       };
       # Qwen's thinking-mode coding sampling, and its non-thinking sampling;
-      # presence_penalty (0-2 per Qwen) curbs the repetition loops a quant falls into
+      # preserve_thinking keeps earlier turns' reasoning in an agent session
       think = {
         temperature = 0.6;
         top_p = 0.95;
-        presence_penalty = 1.0;
-      };
-      fast = {
-        chat_template_kwargs.enable_thinking = false;
-        temperature = 0.7;
-        top_p = 0.8;
-        presence_penalty = 1.5;
-      };
-    };
-    "qwen3.6-35b-a3b-q4" = {
-      name = "Qwen3.6 35B A3B (Q4)";
-      dir = "unsloth/Qwen3.6-35B-A3B-GGUF";
-      match = "*UD-Q4_K_XL*.gguf";
-      context = 131072;
-      # Experts of 24 layers from RAM: measured ~89% VRAM, 38 tok/s
-      args = ["-ngl 99" "--load-mode none" "--n-cpu-moe 24" "-ub 2048" "--top-k 20" "--min-p 0"];
-      chat = {
-        temperature = 1.0;
-        top_p = 0.95;
-        presence_penalty = 1.5;
-      };
-      think = {
-        temperature = 0.6;
-        top_p = 0.95;
-        presence_penalty = 1.0;
+        presence_penalty = 0.0;
+        chat_template_kwargs.preserve_thinking = true;
       };
       fast = {
         chat_template_kwargs.enable_thinking = false;
@@ -75,8 +67,19 @@
       dir = "ornith-ai/Ornith-1.5-35B-A3B-GGUF";
       match = "*Q4_K_M*.gguf";
       context = 131072;
-      # ~0.5GB per layer's experts: 23 in RAM, ~15.3GB (26 measured 13.9GB, 35 tok/s)
-      args = ["-ngl 99" "--load-mode none" "--n-cpu-moe 23" "-ub 2048" "--top-k 20" "--min-p 0"];
+      # ~0.5GB per layer's experts: 20 in RAM, ~15GB (23 measured 85% VRAM, 36 tok/s).
+      # Same reasoning budget, message and prompt cache as Qwen3.6
+      args = [
+        "-ngl 99"
+        "--load-mode none"
+        "--n-cpu-moe 20"
+        "-ub 2048"
+        "--top-k 20"
+        "--min-p 0"
+        "--reasoning-budget 8192"
+        "--cache-ram 4096"
+        "--reasoning-budget-message 'Considering the limited time by the user, I have to give the solution based on the thinking directly now.'"
+      ];
       # The model card's coding sampling
       think = {
         temperature = 0.6;
