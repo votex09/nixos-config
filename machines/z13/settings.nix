@@ -21,7 +21,7 @@
   stateVersion = "26.05";
 
   #--- Language & Keyboard
-  timeZone = "UTC";
+  timeZone = "America/Phoenix";
   locale = "en_US.UTF-8";
   keyboardLayout = "us,ru"; # Meta+Ctrl+Alt+E / R pick one (wm/niri.nix)
   consoleKeyMap = "us";
