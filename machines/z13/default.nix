@@ -75,7 +75,6 @@
     ]
     #--- Disk-unlock lines setup.sh copied from the installer's configuration.nix
     ++ lib.optional (builtins.pathExists ./hardware/boot.nix) ./hardware/boot.nix
-    ++ (lib.optional (machine.windowManager == "hyprland") ./wm/hyprland.nix)
     ++ (lib.optional (machine.windowManager == "niri") ./wm/niri.nix);
 
   #--- kylerj's own apps and keybinds (KDE layout), on this machine only

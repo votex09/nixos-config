@@ -29,7 +29,10 @@
 
   browsers.zen = true;
   terminals.kitty = true;
-  editors.zed = true;
+  editors = {
+    zed = true;
+    vscodium = true;
+  };
   fileBrowsers.dolphin = true;
 
   media = {

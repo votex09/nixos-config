@@ -19,7 +19,6 @@
 
     #--- Editors
     kdePackages.kate
-    vscodium
 
     #--- Chat
     discord
