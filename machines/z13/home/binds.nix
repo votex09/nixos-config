@@ -100,9 +100,6 @@
     "Mod+Shift+D" = bind "Screenshot screen" {spawn = dms "quickCapture screenshot full edit";};
     "Mod+Shift+R" = bind "Start / stop recording" {spawn = dms "quickCapture recordToggle portal";};
 
-    #--- Keyboard layouts (keyboardLayout = "us,ru" in settings.nix)
-    "Mod+Ctrl+Alt+E" = bind "English layout" {spawn = ["niri" "msg" "action" "switch-layout" "0"];};
-    "Mod+Ctrl+Alt+R" = bind "Russian layout" {spawn = ["niri" "msg" "action" "switch-layout" "1"];};
 
     #--- Session & system
     "Mod+Shift+Escape" = bind "Shortcuts to app on / off" {toggle-keyboard-shortcuts-inhibit = {};};

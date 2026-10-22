@@ -23,7 +23,7 @@
   #--- Language & Keyboard
   timeZone = "America/Phoenix";
   locale = "en_US.UTF-8";
-  keyboardLayout = "us,ru"; # Meta+Ctrl+Alt+E / R pick one (wm/niri.nix)
+  keyboardLayout = "us";
   consoleKeyMap = "us";
 
   #--- Window Manager Selection
