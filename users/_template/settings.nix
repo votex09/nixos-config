@@ -61,6 +61,7 @@
   editors = {
     helix = true;
     zed = true;
+    vscodium = false; # VS Code without telemetry
   };
 
   #--- File Browser Selection
@@ -69,6 +70,7 @@
     nautilus = true;
     dolphin = false; # KDE's file manager
     yazi = true;
+    duxFiles = false; # Dux Labs file manager
   };
 
   #--- Media Selection
@@ -145,7 +147,7 @@
   # Enable the game launchers, games and gaming tools you want installed
   gaming = {
     # Launchers
-    steam = true; # NixOS programs.steam + GE-Proton
+    steam = true; # NixOS programs.steam
     heroic = false; # Epic / GOG / Amazon
     prismlauncher = false; # Minecraft
     lutris = false; # Wine launcher
@@ -162,7 +164,7 @@
     r2modman = false; # Thunderstore mod manager
     pathOfBuilding = false; # Path of Exile build planner (Rusty PoB)
     ludusavi = false; # Daily game save backups to ~/SyncBackups/<host>/Ludusavi
-    retroshelf = false; # ES-DE / RetroDECK library tidier (AppImage)
+    retroshelf = false; # ES-DE / RetroDECK library tidier
 
     # Needs prebuilt bundles outside the repo (docs/local/local-binary-installs.md)
     granblueRelinkMods = false; # GBFR mods: RelinkModOrganizer + Reloaded-II
@@ -177,8 +179,18 @@
 
   #--- AI Tools
   claude.enable = false; # Claude Code (needs an Anthropic account)
+  claudeDesktop.enable = false; # Claude desktop app: chat and Claude Code
   opencode.enable = false;
   lmstudio.enable = false; # Runs language models locally
+  llamaSwap.enable = false; # llama.cpp server on the GPU, opencode's default model
+  openWebui.enable = false; # Chat with llama-swap's models in the browser
+  # Models llama-swap serves, from the names in lib/local-models.nix. Each app
+  # lists the ones turned on; the first coding model is opencode's and Zed's default
+  localAi = {
+    code = []; # Coding models
+    edit = null; # Zed's inline suggestions
+    chat = []; # Chat models
+  };
 
   #--- Japanese Language & Game Support
   # ime: fcitx5 + Mozc input method for typing hiragana/katakana/kanji
@@ -187,4 +199,9 @@
     ime = false;
     vn = false;
   };
+
+  #--- User Packages
+  # nixpkgs packages added from NixOS Settings' Packages tab, installed as they
+  # come with no settings of their own, e.g. ["obsidian" "kdePackages.kdenlive"]
+  userPackages = [];
 }

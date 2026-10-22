@@ -11,6 +11,7 @@
   {app-id = "org.gnome.FileRoller";}
   {app-id = "org.kde.ark";}
   {app-id = "org.kde.dolphin";}
+  {app-id = "dev.duxlabs.files";}
   {app-id = "thunar";}
   {app-id = "org.pulseaudio.pavucontrol";}
   {app-id = "pavucontrol";}
@@ -21,6 +22,8 @@
   {app-id = "Zotero";}
   {app-id = "io.github.alainm23.planify";}
   {app-id = "org.quickshell";}
+  # DMS's own windows: Settings, System Monitor, Notepad, Keybinds and the rest
+  {app-id = "^dev\\.duxlabs\\.shell$";}
   {app-id = "Revolt";}
   {app-id = "discord";}
   {app-id = "(?i)goofcord$";}

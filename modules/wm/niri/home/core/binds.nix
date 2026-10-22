@@ -12,12 +12,8 @@
   #-- Niri Keybindings
   #--------------------------------------------------------------------#
   programs.niri.settings.binds = let
-    # Dolphin when it's the user's file manager, else Nautilus
+    # The user's defaultApps, for the app binds
     chosen = (import ../../../../../lib/default-apps.nix {inherit lib;}).forUser user;
-    files =
-      if chosen.fileManager.name == "dolphin"
-      then "dolphin"
-      else "nautilus";
     # The title is what the Mod+/ cheatsheet (DMS) shows for the bind
     bind = title: action: {
       inherit action;
@@ -43,7 +39,7 @@
 
     #--- Applications
     # Screenshot binds live with the other DMS commands in dms/default.nix
-    "Mod+Return" = bind "Terminal" {spawn = ["kitty"];};
+    "Mod+Return" = bind "Terminal" {spawn = chosen.terminal.launch;};
 
     "Mod+Q" = bind "Close window" {close-window = {};};
     "Mod+S" = bind "Cycle column width" {switch-preset-column-width = {};};
@@ -56,6 +52,8 @@
       bind "Switch focus floating / tiled" {switch-focus-between-floating-and-tiling = {};};
     # Turn the window's opacity rule (rules.nix) off and on
     "Mod+Shift+T" = bind "Window transparency on / off" {toggle-window-rule-opacity = {};};
+    # Same, and also works on apps without an opacity rule (blur-presets.nix)
+    "Mod+Y" = bind "Transparency on / off, any app" {spawn = "niri-opacity-toggle";};
     # Cycle the blur and translucency presets (blur-presets.nix)
     "Mod+T" = bind "Cycle blur preset" {spawn = "niri-blur-preset";};
     # Takes shortcuts back from an app that inhibits them
@@ -149,21 +147,25 @@
     "Mod+Shift+H" = bind "Heroic" {spawn = ["heroic"];};
     "Mod+Shift+G" = lib.mkIf user.gaming.lutris (bind "Lutris" {spawn = ["lutris"];});
     "Mod+Shift+Y" = bind "FreeTube" {spawn = ["freetube"];};
-    #--- Focuses the Zed window on the config, or opens one
-    "Mod+Z" = bind "Zed on the config" {
-      spawn = [
-        "nirius"
-        "focus-or-spawn"
-        "--app-id"
-        "^dev\\.zed\\.Zed$"
-        "--title"
-        (lib.escapeRegex (baseNameOf machine.flakePath))
-        "zeditor"
-        machine.flakePath
-      ];
+    #--- Opens the config in the default editor; focuses an open Zed window on it
+    "Mod+Z" = bind "Editor on the config" {
+      spawn =
+        if chosen.textEditor.name == "zed"
+        then
+          [
+            "nirius"
+            "focus-or-spawn"
+            "--app-id"
+            "^dev\\.zed\\.Zed$"
+            "--title"
+            (lib.escapeRegex (baseNameOf machine.flakePath))
+          ]
+          ++ chosen.textEditor.launch
+          ++ [machine.flakePath]
+        else chosen.textEditor.launch ++ [machine.flakePath];
     };
-    "Mod+B" = bind "Zen browser" {spawn = ["zen-beta"];};
-    "Mod+E" = bind "Files" {spawn = [files];};
+    "Mod+B" = bind "Web browser" {spawn = chosen.browser.launch;};
+    "Mod+E" = bind "Files" {spawn = chosen.fileManager.launch;};
     "Mod+Shift+M" = bind "Spotify" {spawn = ["spotify"];};
     "Ctrl+Alt+Delete" = bind "Resources (system monitor)" {spawn = ["resources"];};
     #--- Focuses NixOS Settings, or opens it

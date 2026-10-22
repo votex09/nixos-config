@@ -56,7 +56,9 @@ in {
     managePluginSettings = false;
     plugins = {
       # amdGpuMonitor is per machine: machines/eclipse/hardware/gpu.nix
-      aiOverviewControl.enable = user.claude.enable;
+
+      # Claude Code usage bar widget
+      claudeCodeUsage.enable = user.claude.enable;
       quickCapture.enable = true;
 
       # A bar widget: its IPC target only exists while it sits in a bar
@@ -81,19 +83,6 @@ in {
   #--- Plugin settings, here rather than in plugins.<name>.settings, which DMS
   #--- warns it ignores while managePluginSettings is off
   dms.pluginSettings = {
-    # The plugin stores its options as strings, booleans included.
-    aiOverviewControl = {
-      providerSelection = "claude";
-      pillProviders = "claude";
-      languageOverride = "en_US";
-      densityMode = "comfortable";
-      pillMode = "auto";
-      pillTooltip = "true";
-      pillCompact = "false";
-      showAntigravityModelDetails = "false";
-      notifyThreshold = "85";
-    };
-
     quickCapture = {
       toolbarPosition = "bottom";
       showToolbarBorder = false;
@@ -241,6 +230,7 @@ in {
       # Blur and translucency come from the Mod+T preset (core/blur-presets.nix)
       text = ''
         include optional=true "${config.xdg.configHome}/niri/dms/blur-preset.kdl"
+        include optional=true "${config.xdg.configHome}/niri/dms/opacity-extra.kdl"
       '';
     };
   };
@@ -280,7 +270,6 @@ in {
         default = {};
         description = "Keys merged over settings.json on one machine.";
       };
-      # Hyprland's DMS module declares the same option
       options.dms.pluginSettings = lib.mkOption {
         type = lib.types.attrsOf lib.types.attrs;
         default = {};

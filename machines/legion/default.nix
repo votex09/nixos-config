@@ -45,7 +45,7 @@
       settings = {
         # Legion platform profile, shown by the Fn+Q LED (performance=red,
         # balanced=white, low-power=blue); performance lifts the CPU power limit
-        PLATFORM_PROFILE_ON_AC = "performance";
+        PLATFORM_PROFILE_ON_AC = "balanced";
         PLATFORM_PROFILE_ON_BAT = "low-power";
 
         # amd-pstate EPP: clock up at once for the server tick (TLP default is
@@ -111,7 +111,6 @@
     ]
     #--- Disk-unlock lines setup.sh copied from the installer's configuration.nix
     ++ lib.optional (builtins.pathExists ./hardware/boot.nix) ./hardware/boot.nix
-    ++ (lib.optional (machine.windowManager == "hyprland") ./wm/hyprland.nix)
     ++ (lib.optional (machine.windowManager == "niri") ./wm/niri.nix);
 
   #--- Laptop-specific home-manager modules (the servers live in the main

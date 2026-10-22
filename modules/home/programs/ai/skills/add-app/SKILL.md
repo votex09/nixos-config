@@ -1,6 +1,6 @@
 ---
 name: add-app
-description: Add an application or service to this NixOS repo the way its conventions require (a toggle in the settings template and the user's settings, module, router import, setup.sh's app list, README row and link), then check it is wired everywhere. Use whenever the user asks to install, add, enable or package an app, a game launcher, a Flatpak, an AppImage or a system service in this config, even if they only say "can you get X on here".
+description: Add an application or service to this NixOS repo the way its conventions require (a toggle in the settings template and the user's settings, module, router import, setup.sh's app list, README row and link, NixOS Settings description), then check it is wired everywhere. Use whenever the user asks to install, add, enable or package an app, a game launcher, a Flatpak, an AppImage or a system service in this config, even if they only say "can you get X on here".
 ---
 
 # Add an app
@@ -22,7 +22,15 @@ that catches the step that usually gets missed.
   A prebuilt bundle in `~/.local/opt` gets a wrapper in the folder for what the app is,
   a toggle in that category, and an entry in `docs/local/local-binary-installs.md`.
 - Set only what the user asked for; Stylix owns colors and fonts, so enable the program's
-  theming target instead of setting any.
+  theming target instead of setting any. If catppuccin/nix also has a port for the app,
+  switch one of the two off in `theme/catppuccin.nix`, or both theme it.
+- Install it once: `programs.<pkg>.enable` already adds the package, so don't also list
+  it in `home.packages`.
+- Option keys inside a freeform set (`programs.<pkg>.options`, `settings`) aren't
+  checked by Nix; confirm each against the app's man page (`selection-clipboard`, not a
+  guess).
+- Put it in a category that already exists in the template, and take only the module
+  arguments the module uses (`deadnix --no-lambda-arg <file>` flags the rest).
 
 ## Steps
 
@@ -43,17 +51,28 @@ that catches the step that usually gets missed.
    service `machine.<name>.enable`. `gaming.steam` is the exception, wired in
    `nixos/gaming/default.nix` on `anyUser.gaming.steam`.
 4. `git add <new files>` → `nix flake check` (a new module and import are the
-   uncertain case CLAUDE.md rule 1 keeps the check for).
-5. **README**: grep, never read it whole (`grep -n '^| \*\*' README.md`,
+   uncertain case CLAUDE.md rule 1 keeps the check for). The check only evaluates
+   the module where its toggle is on, so step 1's toggle must be on somewhere first.
+5. **NixOS Settings**: add a `descriptions.json` entry for the new setting. Grep for the
+   file's last entry to find where to append:
+   ```bash
+   grep -n '^\s*"[^"]*":' modules/home/programs/system/nixos-settings/src/descriptions.json | tail -1
+   ```
+   Add an object with at least `summary` and `text` (use the package's description from
+   `nix eval --raw nixpkgs#<pkg>.meta.description` or write a one-liner). Include `icon`
+   (`.desktop` id or icon name) when known. If the setting is a value used by another
+   setting's dropdown (e.g. `fileBrowsers.duxFiles` as a choice for `defaultApps.fileManager`),
+   add it to that parent's `choices` object in the same file.
+6. **README**: grep, never read it whole (`grep -n '^| \*\*' README.md`,
    `grep -n '^\[.*\]: http' README.md`), add the app to its Components row and a
    `[label]: url` link (homepage from `nix eval --raw nixpkgs#<pkg>.meta.homepage`). No
    `---` rules.
-6. **Check the wiring**:
+7. **Check the wiring**:
    ```bash
    bash <skill-dir>/scripts/check-app.sh <category>.<app> <module-path> <readme-label>
    ```
    It confirms the toggle in its template and its value on every machine, whether
    setup.sh offers it, the module staged, the router import pointing at that module (not
    just any file mentioning the toggle), and both README entries.
-7. Cut-only pass over any prose written (remove words, add none), then hand back for the
+8. Cut-only pass over any prose written (remove words, add none), then hand back for the
    rebuild; never run it yourself.

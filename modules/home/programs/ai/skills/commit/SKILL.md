@@ -1,7 +1,6 @@
 ---
 name: commit
-description: Commit the current changes in this public NixOS repo as the user, split into logical commits, after a secret and content scan. Run only when the user asks for a commit.
-disable-model-invocation: true
+description: Commit the current changes in this public NixOS repo as the user, split into logical commits, after a secret and content scan. Use it for every commit, including ones made without the user asking.
 ---
 
 # Commit
@@ -20,7 +19,7 @@ user's). Push and history rewrites (amend, rebase, force) stay with the user.
      window rules, three related binds); a change and the test or check that came with it.
    - **Separate**: unrelated areas (a Moku fix and a FreeTube sync), and a fix that stands
      alone even if found while doing something else. Changes that cancel out within the
-     session (switched to Hyprland, switched back) aren't committed at all.
+     session (a toggle switched on, then off) aren't committed at all.
    - A file mixing topics (`claude.nix`, `settings.nix`, CLAUDE.md) gets split by hunk;
      `git add -p` is interactive and unavailable, so:
      ```bash
@@ -30,7 +29,7 @@ user's). Push and history rewrites (amend, rebase, force) stay with the user.
      Two topics inside one hunk can't be split; put that hunk with the larger topic.
    - Propose the grouping to the user (one line per planned commit) before committing
      when there are more than three or four.
-3. For each group, `git add <paths>` (or stage hunks), then **check** (only when the
+3. For each group, `git add <paths>` by path, never `git add -A` or `.` (or stage hunks), then **check** (only when the
    note at the end calls for it) **and scan**:
    ```bash
    bash <skill-dir>/scripts/check-staged.sh
@@ -42,10 +41,13 @@ user's). Push and history rewrites (amend, rebase, force) stay with the user.
    bash <skill-dir>/scripts/scan.sh
    ```
    gitleaks runs on the staged changes; any leak or `STOP` line means unstage and ask the
-   user. Then have the `public-repo-auditor` subagent review `git diff --cached` for what a
-   pattern scanner misses: personal data, private paths and hostnames, adult app or source
-   names, tokens in unusual formats. If `.claude/settings.json` is staged, do CLAUDE.md's
-   maintenance check on it.
+   user. When the group adds a file, a URL, a comment or prose, or a new name (an app,
+   package, source, path or host), also have the `public-repo-auditor` subagent review
+   `git diff --cached` for what a pattern scanner misses: personal data, private paths and
+   hostnames, adult app or source names, tokens in unusual formats. A group that only
+   changes existing values (a keybind, a number, a toggle, a rule's match) skips it; read
+   its diff yourself for the same things. If `.claude/settings.json` is staged, do
+   CLAUDE.md's maintenance check on it.
 4. **Message** in Conventional Commits form (adopted 2026-10-06; older history is plain
    lowercase summaries, so don't copy its style):
 
@@ -60,12 +62,13 @@ user's). Push and history rewrites (amend, rebase, force) stay with the user.
      `refactor` (same behaviour, new shape), `perf`, `docs` (README, `docs/`, CLAUDE.md
      on their own), `chore` (flake input updates, syncs like the FreeTube blocklist),
      `revert`.
-   - **scope**: the area as the repo names it: a WM (`hyprland`, `niri`, `dms`), an app
+   - **scope**: the area as the repo names it: a WM (`niri`, `dms`), an app
      module (`moku`, `freetube`, `mpv`), a subsystem (`apparmor`, `mullvad`, `kernel`,
      `theme`), `claude` for Claude Code tooling, `eclipse`/`legion` for one host, `flake`
      for input bumps. Omit it when a commit truly spans the whole config.
-   - **body**: bullets wrapped at 72 columns; skip it for a one-line change. Docs that
-     belong to the change go in the same commit and need no bullet of their own.
+   - **body**: bullets wrapped at 72 columns, required for anything beyond a one-line
+     change. Docs that belong to the change go in the same commit and need no bullet of
+     their own.
    - **breaking**: `type(scope)!:` plus a `BREAKING CHANGE:` footer when a rebuild needs
      more than `nixm rebuild` (a WM switch needing `nixm boot`, a manual migration step).
    - The Writing Style rules apply: no puffery, no "various improvements", no "update

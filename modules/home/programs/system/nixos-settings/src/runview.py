@@ -4,13 +4,14 @@ what changed between the old and new system, the services the switch touched,
 and the full log. The helper (helper.py) does the work; this only reads its
 output and can ask it to cancel the build."""
 
+import os
 import time
 
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango  # noqa: E402
+from gi.repository import Adw, Gdk, GLib, Gtk, Pango  # noqa: E402
 
 import closure  # noqa: E402
 import nixlog  # noqa: E402
@@ -26,9 +27,32 @@ STEPS = {
     "switch": "Switch to the new system",
     "boot": "Add it to the boot menu",
     "collect": "Delete old versions and unused files",
+    "password": "Set their password",
 }
 RUNNING_HEIGHT = 360  # px before the Working On list scrolls
 LOG_LIMIT = 6000  # lines kept in the log view
+#--- The last failed run, kept for the Overview after the window closes
+FAILED_LOG = os.path.join(GLib.get_user_state_dir(), "nixos-settings", "last-failed-run.txt")
+
+
+def save_failed(title, heading, reason, log):
+    try:
+        os.makedirs(os.path.dirname(FAILED_LOG), exist_ok=True)
+        with open(FAILED_LOG, "w") as f:
+            f.write(f"{title}\n{time.time():.0f}\n{heading}\n{reason}\n\n{log}")
+    except OSError:
+        pass
+
+
+def last_failed():
+    """(title, epoch, heading, reason, log) of the last failed run, or None."""
+    try:
+        with open(FAILED_LOG, errors="replace") as f:
+            title, when, heading, rest = f.read().split("\n", 3)
+        reason, _, log = rest.partition("\n\n")
+        return title, float(when), heading, reason, log
+    except (OSError, ValueError):
+        return None
 
 
 class Step:
@@ -95,6 +119,8 @@ class RunView(Gtk.Box):
         self.switch_lines = []
         self.samples = []  # (time, bytes downloaded), for the speed
         self.undo = None
+        self.next = None  # (label, callback) offered when the run ends well
+        self.title = title
         self.restart = False
         self.tick_source = 0
         self.dirty = False
@@ -166,6 +192,7 @@ class RunView(Gtk.Box):
                                             overflow=Gtk.Overflow.HIDDEN)
         self.running_group.add(running_scroll)
         self.running_rows = []
+        self.pulsing = []  # build rows' bars, pulsed each tick
 
         #--- Results
         self.notes_group = Adw.PreferencesGroup(visible=False)
@@ -233,11 +260,14 @@ class RunView(Gtk.Box):
         self.undo_button.connect("clicked", self._undo)
         self.restart_button = Gtk.Button(label="Restart Now", visible=False)
         self.restart_button.connect("clicked", self._restart)
+        self.next_button = Gtk.Button(visible=False, css_classes=["suggested-action"])
+        self.next_button.connect("clicked", self._next)
         self.done_button = Gtk.Button(label="Done", css_classes=["suggested-action"], visible=False)
         self.done_button.connect("clicked", lambda _: self.close())
         bar = Gtk.ActionBar()
         bar.pack_start(self.cancel_button)
         bar.pack_end(self.done_button)
+        bar.pack_end(self.next_button)
         bar.pack_end(self.restart_button)
         bar.pack_end(self.undo_button)
 
@@ -292,16 +322,17 @@ class RunView(Gtk.Box):
     #--------------------------------------------------------------------#
     #-- Running the helper
     #--------------------------------------------------------------------#
-    def run(self, argv, first_step="auth"):
+    def run(self, start, first_step="auth"):
+        """`start` returns the helper's process (session.Run)."""
         self.step(first_step, "running")
         self.cancel_button.set_visible(False)
-        flags = (Gio.SubprocessFlags.STDIN_PIPE | Gio.SubprocessFlags.STDOUT_PIPE
-                 | Gio.SubprocessFlags.STDERR_MERGE)
+        self.exit_code = None
         try:
-            self.proc = Gio.Subprocess.new(argv, flags)
-        except GLib.Error as e:
-            self._append("error", e.message)
-            self._finish("failed", "Couldn't start the rebuild", e.message)
+            self.proc = start()
+        except (OSError, GLib.Error) as e:
+            message = getattr(e, "message", None) or str(e)
+            self._append("error", message)
+            self._finish("failed", "Couldn't start the rebuild", message)
             return
         self.stdin = self.proc.get_stdin_pipe()
         self.pending = bytearray()
@@ -380,11 +411,18 @@ class RunView(Gtk.Box):
             self._note("system-reboot-symbolic", f"New kernel: Linux {old} → {new}",
                        "The new kernel is used from the next restart.")
             self.restart = True
-        if "boot" in e:
+        if "boot" in e and e.get("preview"):
+            self._note("dialog-warning-symbolic", "Would start at the next restart",
+                       "This changes " + ", ".join(e["boot"]) + ". Switching to those while logged "
+                       "in has frozen the desktop before, so Apply Now would set it up for the "
+                       "next restart instead.")
+        elif "boot" in e:
             self._note("dialog-warning-symbolic", "Set up for the next restart",
                        "This update changes " + ", ".join(e["boot"]) + ". Switching to those "
                        "while logged in has frozen the desktop before, so the new system "
                        "starts at the next restart instead.")
+        if "note" in e:
+            self._note("dialog-information-symbolic", *e["note"])
         if "cleaned" in e:
             self.cleaned = e["cleaned"]
             versions, freed = self.cleaned.get("versions", 0), self.cleaned.get("freed", "")
@@ -397,6 +435,8 @@ class RunView(Gtk.Box):
         if "error" in e:
             self.errors.append(e["error"])
             self._append("error", e["error"])
+        if "exit" in e:
+            self.exit_code = e["exit"]
         if "result" in e:
             self.result = e
             if e.get("mode"):
@@ -408,6 +448,8 @@ class RunView(Gtk.Box):
             code = proc.get_exit_status() if proc.get_if_exited() else -1
         except GLib.Error:
             code = -1
+        if self.exit_code is not None:
+            code = self.exit_code
         result = self.result.get("result")
         if self.cleaned is not None and result == "ok":
             freed = self.cleaned.get("freed")
@@ -415,6 +457,9 @@ class RunView(Gtk.Box):
                          else "Nothing was old enough or unused, so no space was freed.")
         elif result == "ok" and self.mode == "saved":
             self._finish("ok", "Saved", self.result.get("detail", "Your changes were saved."))
+        elif result == "ok" and self.mode == "built":
+            self._finish("ok", "Preview ready", "It built, and nothing was switched or kept. "
+                                                "What it would change is below.")
         elif result == "ok" or (result is None and code == 0):
             boot = self.mode == "boot"
             self.restart = self.restart or boot
@@ -517,6 +562,8 @@ class RunView(Gtk.Box):
         if self.dirty:
             self._running(p, now)
             self.dirty = False
+        for bar in self.pulsing:
+            bar.pulse()
         return True
 
     def _build_status(self, p, now):
@@ -560,24 +607,33 @@ class RunView(Gtk.Box):
             row = Adw.ActionRow(title_lines=1, subtitle_lines=1)
             icon = Gtk.Image(valign=Gtk.Align.CENTER)
             row.add_prefix(icon)
+            bar = Gtk.ProgressBar(width_request=140, valign=Gtk.Align.CENTER, visible=False)
+            row.add_suffix(bar)
             clock = Gtk.Label(css_classes=["dim-label", "numeric"], valign=Gtk.Align.CENTER)
             row.add_suffix(clock)
             self.running_list.append(row)
-            self.running_rows.append((row, icon, clock))
-        for i, (row, icon, clock) in enumerate(self.running_rows):
+            self.running_rows.append((row, icon, bar, clock))
+        self.pulsing = []
+        for i, (row, icon, bar, clock) in enumerate(self.running_rows):
             if i >= len(items):
                 row.set_visible(False)
                 continue
             kind, name, detail, started = items[i]
             row.set_title(ui.esc(name or "…"))
+            bar.set_visible(False)
             if kind == "download":
                 done, total = detail
                 row.set_subtitle(f"Downloading · {closure.human_size(done)} of {closure.human_size(total)}"
                                  if total else "Downloading")
                 icon.set_from_icon_name(ui.first_icon("folder-download-symbolic"))
+                if total:
+                    bar.set_fraction(min(1.0, done / total))
+                    bar.set_visible(True)
             elif kind == "build":
                 row.set_subtitle(ui.esc(f"Building · {detail}" if detail else "Building"))
                 icon.set_from_icon_name(ui.first_icon("system-run-symbolic"))
+                bar.set_visible(True)
+                self.pulsing.append(bar)
             else:
                 row.set_subtitle("Fetching")
                 icon.set_from_icon_name(ui.first_icon("emblem-synchronizing-symbolic"))
@@ -633,6 +689,11 @@ class RunView(Gtk.Box):
         self.undo = callback
         self.undo_button.set_label(label)
 
+    def set_next(self, label, callback):
+        """Offers `callback` behind the main button if the run ends well."""
+        self.next = (label, callback)
+        self.next_button.set_label(label)
+
     def _finish(self, outcome, heading, detail):
         self.outcome = outcome
         self.ended = time.monotonic()
@@ -651,6 +712,12 @@ class RunView(Gtk.Box):
             self.restart_button.add_css_class("suggested-action")
             self.done_button.remove_css_class("suggested-action")
             self.done_button.set_label("Later")
+        if outcome == "ok" and self.next is not None:
+            self.next_button.set_visible(True)
+            self.done_button.remove_css_class("suggested-action")
+            self.done_button.set_label("Back")
+        if outcome == "failed":
+            save_failed(self.title, heading, detail, self._log_text())
         self.done_button.set_visible(True)
         self.header.set_show_end_title_buttons(True)
         if outcome == "failed" and not self.log_toggle.get_active() and not self.error_group.get_visible():
@@ -682,6 +749,12 @@ class RunView(Gtk.Box):
 
     def _restart(self, _):
         self.window.restart()
+
+    def _next(self, _):
+        _, callback = self.next
+        self.next = None
+        self.close()
+        callback()
 
     def close(self):
         if self.tick_source:

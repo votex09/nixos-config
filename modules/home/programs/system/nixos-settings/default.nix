@@ -19,6 +19,11 @@
   alejandra = inputs.alejandra.defaultPackage.${pkgs.stdenv.hostPlatform.system};
   #--- The weekly nh clean job (nixos/nix/nh.nix), which the Overview's clean-up matches
   clean = osConfig.programs.nh.clean;
+  #--- Proton builds steam.nix adds to Steam, listed on Proton Versions
+  steam = osConfig.programs.steam;
+  compatTools = lib.concatMapStringsSep ";" (p: "${lib.getName p} ${lib.getVersion p}") (
+    lib.optionals steam.enable steam.extraCompatPackages
+  );
 
   nixos-settings = pkgs.stdenvNoCC.mkDerivation {
     pname = "nixos-settings";
@@ -30,7 +35,7 @@
       runHook preInstall
       share=$out/share/nixos-settings
       install -Dm644 -t $share *.py descriptions.json
-      #--- Pick lists for Language & Keyboard; only the names reach the closure
+      #--- Pick lists for Language & Input; only the names reach the closure
       tar -xJOf ${pkgs.glibc.src} --wildcards '*/localedata/SUPPORTED' \
         | sed -n 's|^\([^/ ]*\)/UTF-8.*|\1|p' | sort -u > $share/locales.txt
       sed -n '/^! layout$/,/^! /s/^  *\([^ ]*\)  *\(.*\)$/\1 \2/p' \
@@ -45,7 +50,8 @@
         --set NIXOS_SETTINGS_LIB ${pkgs.path}/lib \
         --set NIXOS_SETTINGS_CLEAN_ARGS ${lib.escapeShellArg clean.extraArgs} \
         --set NIXOS_SETTINGS_CLEAN_DATES ${lib.escapeShellArg (lib.optionalString clean.enable clean.dates)} \
-        --prefix PATH : ${lib.makeBinPath [alejandra]}
+        --set NIXOS_SETTINGS_COMPAT_TOOLS ${lib.escapeShellArg compatTools} \
+        --prefix PATH : ${lib.makeBinPath [alejandra pkgs.nix-search-tv]}
       runHook postInstall
     '';
   };

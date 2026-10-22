@@ -30,32 +30,38 @@ DATA_CHOICES = {("timeZone",): "timezones", ("locale",): "locales",
 PAGE_TITLES = {
     "Wallpaper Picker (Mod+W)": "Wallpaper",
     "Android Screen Mirroring (scrcpy)": "Android",
+    "Language & Keyboard": "Language & Input",  # fits the sidebar's width
 }
 MOVES = {  # setting -> (page, group on that page)
     ("japanese", "vn"): ("Gaming", "Japanese Visual Novels"),
 }
 
-#--- Sidebar sections, top to bottom
+#--- Sidebar sections, top to bottom; under niri, Desktop is on the Niri tab, and
+#--- the two AI sections are always on the AI tab
 SECTIONS = [("computer", "This Computer"), ("desktop", "Desktop"),
-            ("personal", "Personal"), ("apps", "Apps")]
+            ("personal", "Personal"), ("apps", "Default Packages"),
+            ("cloudai", "Cloud AI"), ("localai", "Local AI")]
 
 #--- Each page's sidebar section, icon and blurb, and for the curated ones
 #--- their groups: (title, description, [setting paths]). Pages in the apps
 #--- section keep the template's groups; the one "top" page is the Flatpaks
-#--- page's switch (flatpaks.py lays it out).
+#--- page's switch (flatpaks.py lays it out), and the "userpkgs" one the list
+#--- the Packages tab's pages edit (packages.py).
 PAGES = {
     "Flatpaks": ("top", "system-software-install-symbolic", "", [("", "", ["flatpak.enable"])]),
+    "User Packages": ("userpkgs", "package-x-generic-symbolic", "", [("", "", ["userPackages"])]),
     "System": ("computer", "computer-symbolic",
                "The name, desktop and kernel this computer runs, the same for everyone on it.",
                [("", "", ["hostName", "windowManager", "kernel"])]),
-    "Language & Keyboard": ("computer", "preferences-desktop-locale-symbolic",
-                            "Time zone, language and keyboard layout.",
-                            [("Region", "", ["timeZone", "locale"]),
-                             ("Keyboard", "", ["keyboardLayout", "consoleKeyMap", "capsLockRemap"]),
-                             ("Japanese Typing", "", ["japanese.ime"])]),
+    "Language & Input": ("computer", "preferences-desktop-locale-symbolic",
+                         "Time zone, language and keyboard layout.",
+                         [("Region", "", ["timeZone", "locale"]),
+                          ("Keyboard", "", ["keyboardLayout", "consoleKeyMap", "capsLockRemap"]),
+                          ("Japanese Typing", "", ["japanese.ime"])]),
     "Devices": ("computer", "bluetooth-symbolic",
-                "Bluetooth, printers and sound devices.",
-                [("", "", ["bluetooth.enable", "printing.enable"])]),
+                "Bluetooth, printing and the mouse pointer.",
+                [("", "", ["bluetooth.enable", "printing.enable"]),
+                 ("Mouse Pointer", "", ["cursor", "cursorSize"])]),
     "Network & Firewall": ("computer", "network-workgroup-symbolic",
                            "What other devices may reach on this computer, and what it blocks.",
                            [("Open Ports", "Other devices can connect to this computer on these. "
@@ -70,12 +76,13 @@ PAGES = {
                   ("Sharing & Streaming", "", ["syncthing.enable", "sunshine.enable", "suwayomi.enable"]),
                   ("Containers & Scanning", "", ["docker.enable", "clamav.enable"])]),
     "Appearance": ("desktop", "applications-graphics-symbolic",
-                   "Pointer, wallpaper and the shell's look. Colors, fonts and icons "
+                   "Wallpaper and the shell's look. Colors, fonts and icons "
                    "come from the Catppuccin theme this config sets.",
-                   [("Mouse Pointer", "", ["cursor", "cursorSize"]),
-                    ("Wallpaper", "", ["wallpaper"])]),
+                   [("Wallpaper", "", ["wallpaper"])]),
     "Displays": ("desktop", "video-display-symbolic",
                  "Monitors, night light and what each screen shows.", []),
+    "Input & Connections": ("desktop", "input-keyboard-symbolic",
+                            "The shell's keyboard, mouse, sound, printer and network settings.", []),
     "Desktop Shell": ("desktop", "view-app-grid-symbolic",
                       "The bar, dock, launcher, notifications and widgets.", []),
     "Power & Lock": ("desktop", "system-lock-screen-symbolic",
@@ -102,7 +109,48 @@ PAGES = {
     "Android": ("apps", "phone-symbolic", "Phones and tablets.", None),
     "Gaming": ("apps", "applications-games-symbolic", "Launchers, games and gaming tools.", None),
     "Discord": ("apps", "user-available-symbolic", "Discord and showing what you play.", None),
-    "AI Tools": ("apps", "applications-science-symbolic", "Coding agents and local language models.", None),
+    "Claude": ("cloudai", "applications-science-symbolic",
+               "Anthropic's Claude, signed in with your Claude account.",
+               [("", "", ["claude.enable", "claudeDesktop.enable"])]),
+    "Tools": ("localai", "utilities-terminal-symbolic",
+              "The local model server, the app that downloads models, and opencode, "
+              "the coding agent that uses them.",
+              [("", "", ["llamaSwap.enable", "lmstudio.enable", "opencode.enable", "openWebui.enable"])]),
+    "Models": ("localai", "applications-engineering-symbolic",
+               "The models llama-swap runs on this computer, each with its own tuned settings. "
+               "It loads one at a time, so switching models waits for a load.",
+               [("Code", "For opencode and Zed's agent panel. The first one turned on is the default, "
+                 "and each also gets a fast version with thinking off.", ["localAi.code"]),
+                ("Chat", "For conversation in Open WebUI (under Tools) or llama-swap's Playground "
+                 "(http://127.0.0.1:8090). The coding models are listed there too, and Qwen3.6 also as a "
+                 "chat version with Qwen's chat sampling.", ["localAi.chat"]),
+                ("Inline Suggestions", "Zed's suggestions as you type (Tab accepts one). One at a "
+                 "time, on the CPU, so the GPU stays free.", ["localAi.edit"])]),
+}
+
+#--- List and none-or-one settings shown as one switch per model, straight in their group
+SWITCH_LISTS = {"localAi.code", "localAi.chat", "localAi.edit"}
+
+#--- Text shown above a page's groups, with descriptions.json's ** and !! marks
+PAGE_INTROS = {
+    "Models": "Download a model in **LM Studio** (turn it on under Tools) before turning it on "
+              "here: open its **Discover** tab, search for the repo, pick the named file from the "
+              "download options and download it. llama-swap finds it in ~/.lmstudio/models, so it "
+              "doesn't need loading in LM Studio.\n\n"
+              "Code\n"
+              "1. **Qwen3.6 35B A3B (Q4)**: unsloth/Qwen3.6-35B-A3B-GGUF, the UD-Q4_K_XL file "
+              "(~21 GB)\n"
+              "2. **Ornith 1.5 35B A3B**: ornith-ai/Ornith-1.5-35B-A3B-GGUF, the Q4_K_M file "
+              "(~23 GB)\n"
+              "3. **Qwen3.6 35B A3B (Q3)**: unsloth/Qwen3.6-35B-A3B-GGUF, the UD-Q3_K_XL file (~17 GB)\n\n"
+              "Chat\n"
+              "4. **gpt-oss 20B**: ggml-org/gpt-oss-20b-GGUF (~13 GB)\n"
+              "5. **Gemma 4 26B A4B**: unsloth/gemma-4-26B-A4B-it-qat-GGUF, the UD-Q4_K_XL file "
+              "(~14 GB)\n\n"
+              "Inline Suggestions\n"
+              "6. **Sweep Next-Edit 1.5B**: sweepai/sweep-next-edit-1.5B\n"
+              "7. **Qwen2.5 Coder 1.5B**: ggml-org/Qwen2.5-Coder-1.5B-Q8_0-GGUF\n\n"
+              "!!Without the file, an app gets an error the first time it uses the model.!!",
 }
 FALLBACK_ICON = "applications-system-symbolic"
 
@@ -126,6 +174,7 @@ class Setting:
     note: str = ""  # a caution under the summary
     icon: list = field(default_factory=list)  # icon names or .desktop ids to try
     labels: dict = field(default_factory=dict)  # choice value -> label
+    default: object = None  # the template's value
 
 
 @dataclass
@@ -293,6 +342,7 @@ def make_setting(domain, path, b, values, choices, labels, doc, lead, header_tit
     if subtitle.startswith("Options:"):
         subtitle = ""
     s = Setting(domain, path, "text", title, subtitle)
+    s.default = value
     if dotted in choices:
         s.kind, s.choices = "choice", choices[dotted]
     elif isinstance(value, bool):

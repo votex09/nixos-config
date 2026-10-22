@@ -43,10 +43,13 @@ user: {lib, ...}: {
       ./options.nix
       ./utilities.nix
     ]
+    #--- Packages added from NixOS Settings' Packages tab
+    ++ lib.optionals (user.userPackages != []) [./user-packages.nix]
     #--- File Browsers (controlled by user settings)
     ++ lib.optionals user.fileBrowsers.nautilus [./file-browsers/nautilus.nix]
     ++ lib.optionals user.fileBrowsers.dolphin [./file-browsers/dolphin.nix]
     ++ lib.optionals user.fileBrowsers.yazi [./file-browsers/yazi.nix]
+    ++ lib.optionals user.fileBrowsers.duxFiles [./file-browsers/dux-files.nix]
     #--- Browsers (controlled by user settings)
     ++ lib.optionals user.browsers.zen [./browsers/zen]
     ++ lib.optionals user.browsers.mullvad [./browsers/mullvad.nix]
@@ -55,6 +58,7 @@ user: {lib, ...}: {
     #--- Editors (controlled by user settings)
     ++ lib.optionals user.editors.helix [./editors/helix.nix]
     ++ lib.optionals user.editors.zed [./editors/zed.nix]
+    ++ lib.optionals user.editors.vscodium [./editors/vscodium.nix]
     #--- Media (controlled by user settings)
     ++ lib.optionals user.media.mpv [./media/mpv.nix]
     ++ lib.optionals user.media.spotify [./media/spotify.nix]
@@ -89,9 +93,12 @@ user: {lib, ...}: {
     ++ lib.optionals user.scrcpy.enable [./android/scrcpy.nix]
     #--- AI Tools (controlled by user settings)
     ++ lib.optionals user.claude.enable [./ai/claude.nix]
+    ++ lib.optionals user.claudeDesktop.enable [./ai/claude-desktop.nix]
     ++ lib.optionals user.opencode.enable [./ai/opencode.nix]
     ++ lib.optionals user.lmstudio.enable [./ai/lmstudio.nix]
+    ++ lib.optionals user.llamaSwap.enable [./ai/llama-swap.nix]
     ++ lib.optionals (user.claude.enable || user.opencode.enable) [./ai/mcp.nix]
+    ++ lib.optionals (user.opencode.enable || (user.editors.zed && (user.llamaSwap.enable || user.claude.enable))) [./ai/agent-skills.nix]
     #--- Discord (controlled by user settings)
     ++ lib.optionals user.discord.goofcord [./discord/discord.nix]
     ++ lib.optionals user.discord.arrpc.enable [./discord/arrpc.nix];

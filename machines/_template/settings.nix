@@ -41,7 +41,7 @@
   flakePath = null;
 
   #--- Window Manager Selection, for everyone on this machine
-  # Options: "niri" | "hyprland"
+  # Options: "niri"
   windowManager = "niri";
 
   #--- Kernel Selection
@@ -110,7 +110,7 @@
   mullvad.enable = false;
   # Apps always routed around the VPN (see nixos/security/mullvad/). Known
   # names: steam, heroic, prismlauncher, opencode, claude, spotify, freetube,
-  # ferdium, nixos-settings
+  # ferdium, nixos-settings, protonplus
   mullvad.splitTunnel = [];
 
   #--- SSH Server

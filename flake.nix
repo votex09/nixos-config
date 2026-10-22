@@ -56,6 +56,11 @@
     nix-flatpak.url = "github:gmodena/nix-flatpak"; # has no nixpkgs input
     # Own nixpkgs: following ours misses claude-code.cachix.org
     claude-code.url = "github:sadjow/claude-code-nix";
+    # Source only: ai/claude-desktop.nix builds its package.nix with our pkgs
+    claude-desktop = {
+      url = "github:kubastick/claude-desktop-nixos";
+      flake = false;
+    };
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -102,17 +107,21 @@
       url = "github:epireyn/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    #--- DMS
+    #--- DMS (Dux Shell)
     dms = {
-      url = "github:AvengeMedia/DankMaterialShell/stable";
+      url = "github:duxlabs-dev/dux-shell/stable";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     dms-plugin-registry = {
-      url = "github:AvengeMedia/dms-plugin-registry";
+      url = "github:duxlabs-dev/dux-plugin-registry";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    dank-greeter = {
-      url = "github:AvengeMedia/dank-greeter";
+    dux-greeter = {
+      url = "github:duxlabs-dev/dux-greeter";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    dux-files = {
+      url = "github:duxlabs-dev/dux-files";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

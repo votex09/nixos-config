@@ -9,7 +9,19 @@
   #-- Users
   #--------------------------------------------------------------------#
   users = {
-    warpledge = {gaming.retroshelf = false;};
+    warpledge = {
+      gaming.retroshelf = false;
+      fileBrowsers.dolphin = false;
+      wallpaper = "carousel";
+      editors.vscodium = false;
+      localAi.chat = ["gemma-4-26b-a4b" "gpt-oss-20b"];
+      localAi.edit = null;
+      media.moku = false;
+      media.boorusama = true;
+      defaultApps.fileManager = "duxFiles";
+      fileBrowsers.nautilus = false;
+      fileBrowsers.yazi = false;
+    };
   };
 
   #--------------------------------------------------------------------#
@@ -28,7 +40,7 @@
   capsLockRemap = true;
 
   #--- Window Manager Selection
-  # Options: "hyprland" | "niri"
+  # Options: "niri"
   windowManager = "niri";
 
   #--- Kernel Selection
@@ -65,10 +77,13 @@
     "prismlauncher"
     "opencode"
     "claude"
+    "claude-desktop"
+    "lm-studio"
     "spotify"
     "freetube"
     "ferdium"
     "nixos-settings"
+    "protonplus"
   ];
 
   #--- SSH Server

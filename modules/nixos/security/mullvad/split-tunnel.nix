@@ -59,6 +59,16 @@
       # The package programs.claude-code installs, incl. any plugin wrapper
       bin = "${hm.programs.claude-code.finalPackage}/bin/claude";
     };
+    claude-desktop = {
+      home = true;
+      enable = user.claudeDesktop.enable;
+      bin = "${hm.claude-desktop.package}/bin/claude-desktop";
+    };
+    lm-studio = {
+      home = true;
+      enable = user.lmstudio.enable;
+      bin = "${pkgs.lmstudio}/bin/lm-studio";
+    };
     opencode = {
       home = true;
       enable = user.opencode.enable;
@@ -85,6 +95,11 @@
       home = true;
       enable = true; # imported for every user, no toggle
       bin = "${hm.nixos-settings.package}/bin/nixos-settings";
+    };
+    protonplus = {
+      home = true;
+      enable = true; # in every user's gaming packages, no toggle
+      bin = "${pkgs.protonplus}/bin/protonplus";
     };
   };
 

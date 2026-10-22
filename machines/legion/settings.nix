@@ -30,6 +30,7 @@
       };
       discord.arrpc.enable = false;
       lmstudio.enable = false;
+      llamaSwap.enable = false;
       opencode.enable = false;
       scrcpy.enable = false;
       audio.reaper = false;
@@ -58,7 +59,7 @@
   capsLockRemap = true;
 
   #--- Window Manager Selection
-  # Options: "hyprland" | "niri"
+  # Options: "niri"
   windowManager = "niri";
 
   #--- Kernel Selection
@@ -95,10 +96,13 @@
     "prismlauncher"
     "opencode"
     "claude"
+    "claude-desktop"
+    "lm-studio"
     "spotify"
     "freetube"
     "ferdium"
     "nixos-settings"
+    "protonplus"
   ];
 
   #--- SSH Server

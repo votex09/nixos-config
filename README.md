@@ -153,9 +153,9 @@ Most of what's below is optional: apps are switched on per person in `users/<nam
 
 | | |
 | --- | --- |
-| **Window Manager** | [Niri][niri] / [Hyprland][hyprland] |
-| **Status Bar / Notifier / Launcher / Lock** | [DankMaterialShell][dms] |
-| **Display Manager** | [dms-greeter][dms-greeter] via [greetd][greetd] |
+| **Window Manager** | [Niri][niri] |
+| **Status Bar / Notifier / Launcher / Lock** | [Dux Shell][dms] (formerly DankMaterialShell) |
+| **Display Manager** | [dux-greeter][dms-greeter] via [greetd][greetd] |
 | **Color Scheme** | [Catppuccin][catppuccin] Mocha Mauve applied globally via [Stylix][stylix] + [catppuccin/nix][catppuccin-nix] |
 | **Fonts** | [JetBrains Mono Nerd Font][nerd-fonts], Monaspace, Roboto, Nerd Fonts Symbols |
 | **Window Switcher** | Niri's built-in recent-windows switcher |
@@ -178,7 +178,7 @@ Most of what's below is optional: apps are switched on per person in `users/<nam
 
 | | |
 | --- | --- |
-| **Editors / IDE** | [Zed][zed], [Helix][helix], [micro][micro] (quick edits) |
+| **Editors / IDE** | [Zed][zed], [Helix][helix], [VSCodium][vscodium], [micro][micro] (quick edits) |
 | **Formatter** | [alejandra][alejandra] v3.0.0 |
 | **Rebuild Wrapper** | [`nixm`](./modules/home/nixm.nix) (fzf menu over [nh][nh]) |
 </details>
@@ -189,10 +189,10 @@ Most of what's below is optional: apps are switched on per person in `users/<nam
 | | |
 | --- | --- |
 | **Browsers** | [Zen][zen] / [Mullvad Browser][mullvad-browser] / [Helium][helium] |
-| **File Manager** | [Nautilus][nautilus] (with an open-in-Kitty menu entry from [nautilus-open-any-terminal][nautilus-open-any-terminal]), [Dolphin][dolphin] (optional, themed through Kvantum and the Catppuccin KDE colour scheme, with [Ark][ark] for archives), [Yazi][yazi] (terminal file manager) |
+| **File Manager** | [Nautilus][nautilus] (with an open-in-Kitty menu entry from [nautilus-open-any-terminal][nautilus-open-any-terminal]), [Dolphin][dolphin] (optional, themed through Kvantum and the Catppuccin KDE colour scheme, with [Ark][ark] for archives), [Yazi][yazi] (terminal file manager), [Dux Files][dux-files] (standalone file manager from Dux Labs) |
 | **Media Player** | [mpv][mpv], [Spotify][spotify] via [spicetify-nix][spicetify], [FreeTube][freetube] |
 | **Twitch** | [Streamlink Twitch GUI][streamlink-twitch-gui] browses Twitch and hands the stream to [Streamlink][streamlink], which plays it in mpv, so there are no ads and the follow list stays local with no Twitch account attached; wrapped from the upstream AppImage with `appimageTools`, since it is not in nixpkgs |
-| **Screenshot / Recording** | [Quick Capture][quick-capture] (Niri, Hyprland), [gpu-screen-recorder][gpu-screen-recorder] |
+| **Screenshot / Recording** | [Quick Capture][quick-capture] (Niri), [gpu-screen-recorder][gpu-screen-recorder] |
 | **Clipboard** | [ClipBoard+][clipboard-plus] (Niri) |
 | **Wallpaper Picker** | [Wallpaper Carousel][wallpaper-carousel] over the images in `modules/theme/wallpapers` (Niri), the default; each user picks it or Wallpaper Engine with `wallpaper` in their settings |
 | **Animated Wallpaper** | [linux-wallpaperengine][linux-wallpaperengine] plays Wallpaper Engine scenes and videos from the Steam Workshop, in place of DMS's wallpaper; the [Linux Wallpaper Engine][dms-wallpaperengine] DMS plugin picks them (Niri, `wallpaper = "engine"`; needs Wallpaper Engine bought on Steam) |
@@ -201,7 +201,7 @@ Most of what's below is optional: apps are switched on per person in `users/<nam
 | **Guitar** | [TONE3000][tone3000] (official NAM player, browses its capture and IR library in-app), [Guitarix][guitarix] (modular amp rig), [ir.lv2][ir-lv2] for cabinet IRs, [qpwgraph][qpwgraph] for patching, plus [FxFloorBoard][katana-fxfloorboard] to edit patches on the Boss Katana itself |
 | **Rhythm Games** | [feedBack][feedback] plays Guitar Pro tabs through its own audio engine, with VST hosting and amp modeling, so the Katana DI feed doubles as the game input; wrapped from the upstream AppImage with `appimageTools`, since it is not in nixpkgs. [Rocksmith 2014][rocksmith] runs on Proton and reads the same DI through [PipeASIO][pipeasio] and [RS_ASIO][rs-asio]; the module writes their config, and the hand-done install steps live in `docs/gaming/rocksmith-2014.md` |
 | **Chat / Productivity** | [GoofCord][goofcord] via [nixcord][nixcord] (Vencord, with [arRPC][arrpc] running alongside it so Steam and Proton games show up as rich presence), [Ferdium][ferdium] (all your web messengers in one window), [Thunderbird][thunderbird], [Obsidian][obsidian] |
-| **AI Tooling** | [Claude Code][claude-code], [OpenCode][opencode], [LM Studio][lmstudio] |
+| **AI Tooling** | [Claude Code][claude-code], [Claude Desktop][claude-desktop], [OpenCode][opencode], [LM Studio][lmstudio], [llama-swap][llama-swap], [Open WebUI][open-webui] |
 | **Android** | [scrcpy][scrcpy] (mirror and control a device over USB or wifi, nothing to install on the phone) |
 | **Video Trimming** | [Video Trimmer][video-trimmer] (cut a clip out of a video without re-encoding it), [Constrict][constrict] (re-encode a video to fit a chosen file size) |
 | **Manga / Anime Reader** | [Suwayomi][suwayomi] is a local manga reader, opened from the launcher as a [Helium][helium] app window (`localhost:4567`) after a password prompt. [Moku][moku] covers manga, light novels and anime, built from source with a fix for overlapping search results, a per-source filter panel and a button that opens the current episode in mpv, with a local [FlareSolverr][flaresolverr] for Cloudflare-protected sources |
@@ -209,7 +209,7 @@ Most of what's below is optional: apps are switched on per person in `users/<nam
 | **Finance** | [HomeBank][homebank] (personal accounting with labeled transactions and a running balance) |
 | **Collection Tracking** | [Tonkatsu Box][tonkatsu-box] (games, film, anime, manga, visual novels, books and music in one local database, imports from Steam and AniList; a prebuilt bundle kept in `~/.local/opt/` instead of nixpkgs) |
 | **Task Manager** | [Resources][resources] (system and process monitor) |
-| **Settings App** | NixOS Settings ([`modules/home/programs/system/nixos-settings/`](./modules/home/programs/system/nixos-settings/)), a GTK window over the settings files: switch apps on or off and pick the kernel, window manager, services, firewall ports, language and keyboard from menus, with a search box that also finds DankMaterialShell's settings and buttons that open the shell's own pages (monitors, shortcuts, mouse and touchpad, theme). Apply writes the files, checks them and rebuilds through a [polkit][polkit] helper, on a page that shows the downloads and builds as they run, what changed and which services restarted, with an undo if anything fails. Its Overview checks for updates and installs them, switches back to an earlier version, and cleans up old versions to free disk space. Tabs under the search box split the sidebar into Main, Niri and Docs. Niri's Window Rules page makes a rule for a window you click or pick from a list (floating, size, workspace, opacity, hidden from screen capture and more) and lists every rule niri has, grouped by what it does; Docs' Proton page copies game launch options with a click (this config's wrappers and presets, and general Proton ones); and a Flatpaks page turns Flatpak on or off and updates, repairs and removes Flatpak apps. Each person changes only their own apps; only admins change the computer-wide settings, update or switch versions |
+| **Settings App** | NixOS Settings ([`modules/home/programs/system/nixos-settings/`](./modules/home/programs/system/nixos-settings/)), a GTK window over the settings files: switch apps on or off and pick the kernel, window manager, services, firewall ports, language and keyboard from menus, with a search box that also finds DankMaterialShell's settings and buttons that open the shell's own pages (monitors, shortcuts, mouse and touchpad, theme). Apply writes the files, checks them and rebuilds through a [polkit][polkit] helper, on a page that shows the downloads and builds as they run, what changed and which services restarted, with an undo if anything fails. Apply can also preview: it builds and shows what would change without switching. Its Overview checks for updates and installs all of them or the ones you tick, switches back to an earlier version, cleans up old versions with an estimate of the space freed, shows the config's git state and keeps the last failed run's log. Tabs across the top of the window split the sidebar into Main, Packages, Niri and Docs. Packages holds the app switches as Default Packages, a nixpkgs search whose Install button adds a package to that person's User Packages, and the list of those with an Uninstall button; under niri, the Niri tab also holds the desktop shell's pages and its shortcut buttons. Niri's Window Rules page makes a rule for a window you click or pick from a list (floating, size, workspace, opacity, hidden from screen capture and more) and lists every rule niri has, grouped by what it does, with each rule's effects as coloured tags and an edit and remove button. Docs has Proton's launch options (copied with a click) and installed Proton versions, and the game notes from `docs/gaming/`. Main also has a Flatpaks page that turns Flatpak on or off and updates, repairs and removes Flatpak apps, a Backups page for FreeTube and Zen, a People page where an admin adds a person with their first password, and which services are running on the Services page. Each person changes only their own apps; only admins change the computer-wide settings, update or switch versions. |
 | **Japanese** | [fcitx5][fcitx5] + [Mozc][mozc] for typing hiragana, katakana and kanji, plus [innoextract][innoextract], [cabextract][cabextract] and [mdf2iso][mdf2iso] for unpacking raw Japanese visual novels (off by default) |
 </details>
 
@@ -262,9 +262,8 @@ Most of what's below is optional: apps are switched on per person in `users/<nam
 </details>
 
 [niri]: https://github.com/YaLTeR/niri
-[hyprland]: https://hyprland.org
-[dms]: https://github.com/AvengeMedia/DankMaterialShell
-[dms-greeter]: https://github.com/AvengeMedia/dank-greeter
+[dms]: https://github.com/duxlabs-dev/dux-shell
+[dms-greeter]: https://github.com/duxlabs-dev/dux-greeter
 [greetd]: https://git.sr.ht/~kennylevinsen/greetd
 [catppuccin]: https://github.com/catppuccin/catppuccin
 [catppuccin-nix]: https://github.com/catppuccin/nix
@@ -287,6 +286,7 @@ Most of what's below is optional: apps are switched on per person in `users/<nam
 [zed]: https://zed.dev
 [helix]: https://helix-editor.com
 [micro]: https://micro-editor.github.io
+[vscodium]: https://github.com/VSCodium/vscodium
 [zen]: https://zen-browser.app
 [mullvad-browser]: https://mullvad.net/en/browser
 [helium]: https://github.com/schembriaiden/helium-browser-nix-flake
@@ -323,6 +323,7 @@ Most of what's below is optional: apps are switched on per person in `users/<nam
 [obsidian]: https://obsidian.md
 [scrcpy]: https://github.com/Genymobile/scrcpy
 [yazi]: https://github.com/sxyazi/yazi
+[dux-files]: https://github.com/duxlabs-dev/dux-files
 [arrpc]: https://arrpc.openasar.dev
 [video-trimmer]: https://gitlab.gnome.org/YaLTeR/video-trimmer
 [constrict]: https://gitlab.gnome.org/World/Constrict
@@ -369,8 +370,11 @@ Most of what's below is optional: apps are switched on per person in `users/<nam
 [sunshine]: https://github.com/LizardByte/Sunshine
 [moonlight]: https://moonlight-stream.org
 [claude-code]: https://github.com/anthropics/claude-code
+[claude-desktop]: https://code.claude.com/docs/en/desktop-linux
 [opencode]: https://github.com/opencode-ai/opencode
 [lmstudio]: https://lmstudio.ai
+[llama-swap]: https://github.com/mostlygeek/llama-swap
+[open-webui]: https://github.com/open-webui/open-webui
 [docker]: https://www.docker.com
 [mullvad]: https://mullvad.net
 [resolved]: https://www.freedesktop.org/software/systemd/man/systemd-resolved.html
@@ -471,7 +475,7 @@ Short commands I use in place of longer ones, all set up in [`zsh.nix`](./module
 
 `Mod` is the Super (Windows) key.
 
->**Note:** `Mod+/` opens a keybind overlay cheatsheet in both WMs.
+>**Note:** `Mod+/` opens a keybind overlay cheatsheet.
 
 <details>
 <summary>⌨️ Niri Keybinds</summary>
@@ -518,6 +522,7 @@ Short commands I use in place of longer ones, all set up in [`zsh.nix`](./module
 | `Mod+Space` | Toggle floating |
 | `Mod+Shift+Space` | Switch focus between floating and tiled windows |
 | `Mod+Shift+T` | Turn the window's opacity rule off and on |
+| `Mod+Y` | Same, and makes apps without an opacity rule (Zen) translucent too |
 | `Mod+T` | Cycle blur presets (Subtle, Default, Clear) |
 | `Mod+Escape` | Take shortcuts back from an app that inhibits them |
 | `Mod+F` | Maximize column |
@@ -588,79 +593,6 @@ Short commands I use in place of longer ones, all set up in [`zsh.nix`](./module
 
 </details>
 
-<details>
-<summary>⌨️ Hyprland Keybinds</summary>
-
-#### Apps
-
-| Keybind | Action |
-| --- | --- |
-| `Mod+Return` | Terminal (Kitty) |
-| `Mod+Z` | Code editor (Zed) |
-| `Mod+B` | Browser (Zen) |
-| `Mod+E` | File manager (Nautilus, or Dolphin when it's the default) |
-| `Mod+Shift+S` | Steam |
-| `Mod+Shift+D` | Discord (GoofCord) |
-| `Mod+Shift+H` | Heroic |
-| `Mod+Shift+G` | Lutris |
-| `Mod+Shift+M` | Spotify |
-| `Mod+Shift+Y` | FreeTube |
-| `Mod+Shift+C` | NixOS Settings (focuses it when already open) |
-
-#### Window Management
-
-| Keybind | Action |
-| --- | --- |
-| `Mod+Q` | Close window |
-| `Mod+Space` | Toggle floating |
-| `Mod+F` | Fullscreen |
-| `Mod+D` | Maximize |
-| `Mod+T` | Toggle opacity |
-| `Mod+H` | Toggle HDR on the main monitor |
-| `Mod+0` | Toggle scratchpad |
-| `Mod+Shift+0` | Move to scratchpad |
-
-#### Shell (DankMaterialShell)
-
-Same binds as the Niri table, `Mod+A` through `Mod+R`.
-
-#### Focus & Movement
-
-| Keybind | Action |
-| --- | --- |
-| `Mod+←/→/↑/↓` | Focus window in direction |
-| `Mod+Shift+←/→/↑/↓` | Move window in direction |
-| `Mod+Scroll` | Scroll through workspaces |
-
-#### Resize & Move
-
-| Keybind | Action |
-| --- | --- |
-| `Mod+Ctrl+←/→/↑/↓` | Resize window ±80px |
-| `Mod+Alt+←/→/↑/↓` | Move floating window ±80px |
-| `Mod+LMB drag` | Move window |
-| `Mod+RMB drag` | Resize window |
-
-#### Workspaces
-
-| Keybind | Action |
-| --- | --- |
-| `Mod+1–9` | Focus workspace N |
-| `Mod+Shift+1–9` | Move window to workspace N |
-
-#### Media & Capture
-
-| Keybind | Action |
-| --- | --- |
-| `Print` | Region screenshot (Quick Capture, opens its editor) |
-| `Mod+Print` | Focused window screenshot |
-| `Mod+Shift+Print` | Focused output screenshot |
-| `Ctrl+Print` | All outputs screenshot |
-| `Mod+Ctrl+Print` | Scrolling capture |
-| `Mod+End` | Toggle screen recording (portal) |
-
-</details>
-
 ## Structure
 
 **Layout:** top-level directories and what lives in each:
@@ -671,7 +603,7 @@ setup.sh                          # sets up a new computer, or adds a person
 lib/settings.nix                  # reads and checks the settings files
 machines/
   ├── _template/                  # copied for a new computer
-  └── {desktop,laptop}/
+  └── {eclipse,legion}/
         ├── settings.nix          # machine toggles, and who logs in
         ├── default.nix           # machine entry
         ├── hardware/             # hardware-configuration.nix, GPU, swapfile (laptop)
@@ -706,9 +638,10 @@ flake.nix
 | [`home-manager`](https://github.com/nix-community/home-manager) | User environment management |
 | [`nur`](https://github.com/nix-community/NUR) | NixOS User Repository |
 | [`niri`](https://github.com/epireyn/niri-flake) (epireyn/niri-flake) | Niri WM |
-| [`dms`](https://github.com/AvengeMedia/DankMaterialShell) (AvengeMedia, stable) | DankMaterialShell |
-| [`dms-plugin-registry`](https://github.com/AvengeMedia/dms-plugin-registry) | DankMaterialShell plugins (AI usage overview, Quick Capture, AMD GPU monitor, ClipBoard+, Wallpaper Carousel, Linux Wallpaper Engine) |
-| [`dank-greeter`](https://github.com/AvengeMedia/dank-greeter) | Login screen that matches DankMaterialShell |
+| [`dms`](https://github.com/duxlabs-dev/dux-shell) (duxlabs-dev, stable) | Dux Shell (formerly DankMaterialShell) |
+| [`dms-plugin-registry`](https://github.com/duxlabs-dev/dux-plugin-registry) | Dux Shell plugins (Claude Code usage, Quick Capture, AMD GPU monitor, ClipBoard+, Wallpaper Carousel, Linux Wallpaper Engine) |
+| [`dux-files`](https://github.com/duxlabs-dev/dux-files) | Dux Files, standalone file manager from Dux Labs |
+| [`dux-greeter`](https://github.com/duxlabs-dev/dux-greeter) | Login screen that matches Dux Shell |
 | [`stylix`](https://github.com/nix-community/stylix) | System-wide theming |
 | [`catppuccin`](https://github.com/catppuccin/nix) | Catppuccin theme module |
 | [`nixcord`](https://github.com/kaylorben/nixcord) | GoofCord / Vencord |
@@ -721,6 +654,7 @@ flake.nix
 | [`cachyos-kernel`](https://github.com/xddxdd/nix-cachyos-kernel) | CachyOS kernel |
 | [`nix-flatpak`](https://github.com/gmodena/nix-flatpak) | Declarative Flatpak management |
 | [`claude-code`](https://github.com/sadjow/claude-code-nix) | Claude Code, packaged so it updates without waiting on nixpkgs |
+| [`claude-desktop`](https://github.com/kubastick/claude-desktop-nixos) | Anthropic's Linux .deb of the Claude desktop app, patched for NixOS |
 | [`nix-index-database`](https://github.com/nix-community/nix-index-database) | Prebuilt weekly nix-index database for comma and the command-not-found hint |
 | [`alejandra`](https://github.com/kamadorueda/alejandra) (pinned 3.0.0) | Nix formatter |
 | [`affinity-nix`](https://github.com/mrshmllow/affinity-nix) | Affinity Suite v3 (Photo, Designer, Publisher) via Wine |

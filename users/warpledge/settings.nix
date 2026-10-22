@@ -52,6 +52,7 @@
     nautilus = true;
     yazi = true;
     dolphin = true;
+    duxFiles = true;
   };
 
   #--- Default Apps
@@ -132,7 +133,7 @@
   # Enable the game launchers, games and gaming tools you want installed
   gaming = {
     # Launchers
-    steam = true; # NixOS programs.steam + GE-Proton
+    steam = true; # NixOS programs.steam
     heroic = true; # Epic / GOG / Amazon
     prismlauncher = true; # Minecraft
     lutris = false; # Wine launcher
@@ -161,8 +162,16 @@
 
   #--- AI Tools
   claude = {enable = true;};
+  claudeDesktop = {enable = true;};
   opencode = {enable = true;};
   lmstudio = {enable = true;};
+  llamaSwap = {enable = true;};
+  openWebui = {enable = true;};
+  localAi = {
+    code = ["qwen3.6-35b-a3b-q4" "qwen3.6-35b-a3b" "ornith-1.5-35b-a3b"];
+    edit = "sweep-next-edit-1.5b";
+    chat = ["gpt-oss-20b" "gemma-4-26b-a4b"];
+  };
 
   #--- Japanese Language & Game Support
   # ime: fcitx5 + Mozc input method for typing hiragana/katakana/kanji

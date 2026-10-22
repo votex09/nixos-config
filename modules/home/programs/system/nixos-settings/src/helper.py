@@ -12,13 +12,19 @@ are for admins (wheel), who could run nixos-rebuild anyway.
 Usage: nixos-settings-apply '{"mode": "switch"|"boot", "machine": name|null,
                               "changes": [[["media", "mpv"], true], ...]}'
        (machine: whose block takes the changes; null for the caller's own file)
-       nixos-settings-apply '{"rebuild": true, "mode": "switch"|"boot"|"auto"}'
+       nixos-settings-apply '{"rebuild": true, "mode": "switch"|"boot"|"auto"|"build"}'
+       nixos-settings-apply '{"rebuild": true, "mode": ..., "newUser": name}'
+       (stdin's first line: the first password for that newly listed person)
        nixos-settings-apply '{"activate": "/nix/store/...", "mode": ...}'
        nixos-settings-apply '{"collectGarbage": true}'
        nixos-settings-apply '{"clean": true}'  (drop settings the templates lost)
+       nixos-settings-apply '{"session": true}'  (stdin: NixOS Settings' socket;
+                                                 runs each request it sends, see session())
 
 "auto" switches now unless the new system changes a package that froze the
 desktop when switched live (closure.CORE); then it's used from the next boot.
+"build" builds and compares only, then puts back any settings it saved, so
+nothing changes; the app's own writes are its to put back.
 While building, a line "cancel" on stdin (or stdin closing) stops the build."""
 
 import fcntl
@@ -29,6 +35,7 @@ import pwd
 import re
 import shlex
 import signal
+import socket
 import subprocess
 import sys
 import threading
@@ -91,7 +98,13 @@ class Canceller:
         self.proc = None
         self.allowed = False
         self.requested = False
-        threading.Thread(target=self._watch, daemon=True).start()
+        self.watching = False
+
+    def watch(self):
+        """Started with the first cancellable step, so a session's stdin is left alone."""
+        if not self.watching:
+            self.watching = True
+            threading.Thread(target=self._watch, daemon=True).start()
 
     def _watch(self):
         try:
@@ -111,6 +124,7 @@ class Canceller:
                 pass
 
     def run(self, proc):
+        self.watch()
         self.proc, self.allowed = proc, True
         if self.requested:
             self._stop()
@@ -184,13 +198,34 @@ def compare(path, mode):
     old, new = closure.kernel(closure.BOOTED), closure.kernel(path)
     if old and new and old != new:
         emit(kernel=[old, new])
-    if mode == "auto":
+    if mode in ("auto", "build"):
         core = diff.core()
-        mode = "boot" if core else "switch"
         if core:
-            emit(boot=core)
+            emit(boot=core, preview=mode == "build")
+        if mode == "auto":
+            mode = "boot" if core else "switch"
     emit(step="compare", state="done", mode=mode)
     return mode
+
+
+def set_password(name, password):
+    """Gives a newly listed person their first password; one they already have
+    is left alone, so this can't change anyone's password."""
+    emit(step="password", state="start")
+    status = subprocess.run(["passwd", "-S", name], capture_output=True, text=True, env=env())
+    fields = status.stdout.split()
+    if status.returncode != 0 or len(fields) < 2:
+        emit(step="password", state="failed")
+        raise RuntimeError(f"there's no account for {name}; the rebuild didn't make one")
+    if fields[1] == "P":
+        emit(note=[f"{name} already has a password", "It was left as it was."])
+    else:
+        done = subprocess.run(["chpasswd"], input=f"{name}:{password}\n", capture_output=True, text=True,
+                              env=env())
+        if done.returncode != 0:
+            emit(step="password", state="failed")
+            raise RuntimeError(f"setting {name}'s password failed: {done.stderr.strip()}")
+    emit(step="password", state="done")
 
 
 def activate(path, mode):
@@ -234,6 +269,47 @@ def collect():
     emit(cleaned={"versions": sum(1 for line in plain if DELETED_SYSTEM.match(line)),
                   "paths": int(freed.group(1)) if freed else 0,
                   "freed": freed.group(2) if freed else ""})
+
+
+#--------------------------------------------------------------------#
+#-- Session
+#--------------------------------------------------------------------#
+def serve(request, conn):
+    """Runs one request as a fresh helper, its stdin and output on `conn`."""
+    with conn:
+        try:
+            code = subprocess.run([sys.executable, "-I", os.path.realpath(__file__), request],
+                                  stdin=conn, stdout=conn, stderr=subprocess.STDOUT).returncode
+            conn.sendall(("@ns " + json.dumps({"exit": code}) + "\n").encode())
+        except OSError:
+            pass
+
+
+def session():
+    """Stays root for the NixOS Settings window that started it (src/session.py).
+    Each message on stdin, a socket pair only that window holds, is a request plus
+    the socket for its output; it ends when the window closes its end."""
+    try:
+        ctl = socket.socket(fileno=0)
+        if ctl.type != socket.SOCK_SEQPACKET:
+            raise OSError
+    except OSError:
+        refuse("a session is only for NixOS Settings")
+    os.environ["NIXOS_SETTINGS_SESSION"] = "1"
+    ctl.send(b"ready")
+    while True:
+        try:
+            msg, fds, _, _ = socket.recv_fds(ctl, 1 << 20, 1)
+        except OSError:
+            break
+        if not msg:
+            break
+        if len(fds) != 1:
+            for fd in fds:
+                os.close(fd)
+            continue
+        conn = socket.socket(fileno=fds[0])
+        threading.Thread(target=serve, args=(msg.decode("utf-8", "replace"), conn)).start()
 
 
 #--------------------------------------------------------------------#
@@ -317,12 +393,20 @@ def main():
         refuse("bad request")
     if not isinstance(request, dict):
         refuse("bad request")
+    if request.get("session") is True:
+        if os.environ.get("NIXOS_SETTINGS_SESSION"):
+            refuse("bad request")
+        session()
+        return
     mode = request.get("mode", "switch")
-    if mode not in ("switch", "boot", "auto"):
+    if mode not in ("switch", "boot", "auto", "build"):
         refuse("bad request")
 
-    changes, system, target = None, None, None
+    changes, system, target, new_user, password = None, None, None, None, None
     collecting = request.get("collectGarbage") is True
+    if mode == "build" and (collecting or "activate" in request or "newUser" in request
+                            or request.get("clean") is True):
+        refuse("bad request")
     if request.get("clean") is True:
         pass
     elif collecting:
@@ -337,11 +421,20 @@ def main():
     elif request.get("rebuild") is True:
         if not admin:
             refuse("only an admin can rebuild without changes")
+        if "newUser" in request:
+            new_user = request["newUser"]
+            if not isinstance(new_user, str) or not new_user:
+                refuse("bad request")
+            password = sys.stdin.readline().rstrip("\n")
+            if not password:
+                refuse("no password came with the new person")
     else:
         changes = user_changes(cfg, request.get("changes"))
         target = request.get("machine")
         if target is not None and not isinstance(target, str):
             refuse("bad request")
+        if mode == "build" and target not in (None, cfg.machine):
+            refuse("only this computer's changes can be previewed")
 
     with open(LOCK, "w") as lock:
         try:
@@ -369,6 +462,8 @@ def main():
                 refuse(f"{caller.pw_name} isn't listed in machines/{cfg.machine}/settings.nix")
             if target is not None and target not in state["userMachines"]:
                 refuse(f"{caller.pw_name} isn't listed in machines/{target}/settings.nix")
+            if new_user is not None and new_user not in state["resolved"]["users"]:
+                refuse(f"{new_user} isn't listed in machines/{cfg.machine}/settings.nix")
         old = None
         try:
             if changes:
@@ -383,13 +478,23 @@ def main():
             if system is None:
                 system, link = build(cfg, caller.pw_name)
             mode = compare(system, mode)
-            activate(system, mode)
+            if mode == "build":
+                if old:
+                    backend.restore(cfg, old)
+            else:
+                activate(system, mode)
             if link:
                 try:
                     os.unlink(link)
                 except OSError:
                     pass
-            emit(result="ok", mode=mode)
+            if new_user is not None and mode == "boot":
+                # The account is only made when the new system starts
+                emit(note=[f"Set {new_user}'s password after the restart",
+                           f"Run sudo passwd {new_user} once this computer has restarted."])
+            elif new_user is not None:
+                set_password(new_user, password)
+            emit(result="ok", mode="built" if mode == "build" else mode)
         except Cancelled:
             if old:
                 backend.restore(cfg, old)

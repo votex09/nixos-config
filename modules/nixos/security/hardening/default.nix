@@ -39,7 +39,6 @@
     };
     login = {}; # Login service
     sddm = {}; # Simple Desktop Display Manager
-    hyprlock = {}; # Hyprland screen locker
     swaylock = {}; # Sway screen locker
     sudo = {}; # Sudo authentication
     su = {}; # Switch user authentication
@@ -79,7 +78,6 @@
   #-- Intrusion Detection System (IDS) Tools
   #--------------------------------------------------------------------#
   environment.systemPackages = with pkgs; [
-    sbomnix # SBOM + CVE scanning; ships vulnxscan
     lynis # Security auditing tool
   ];
 
