@@ -100,7 +100,6 @@
     "Mod+Shift+D" = bind "Screenshot screen" {spawn = dms "quickCapture screenshot full edit";};
     "Mod+Shift+R" = bind "Start / stop recording" {spawn = dms "quickCapture recordToggle portal";};
 
-
     #--- Session & system
     "Mod+Shift+Escape" = bind "Shortcuts to app on / off" {toggle-keyboard-shortcuts-inhibit = {};};
     "Ctrl+Alt+BackSpace" = bind "Restart shell" {spawn = ["dms" "restart"];};
