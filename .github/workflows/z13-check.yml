@@ -1,0 +1,31 @@
+# Checks the Flow Z13 config on GitHub's machines, since there's no NixOS
+# computer to check it on before install day.
+name: z13 check
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      # The desktop closure needs far more than the runner's ~20 GB free
+      - uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: true
+
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            extra-substituters = https://nix-community.cachix.org https://niri.cachix.org https://claude-code.cachix.org https://moku.cachix.org
+            extra-trusted-public-keys = nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= niri.cachix.org-1:Wv0OmO7PsuocRKzfDoJ3mulSl7Z6oezYhGhR+3W2964= claude-code.cachix.org-1:YeXf2aNu7UTX8Vwrze0za1WEDS+4DuI2kVeWEE4fsRk= moku.cachix.org-1:EnMXp6/uQVI6IRbKW0xEQylSYoV2N4vszOsoW6/Pq1s=
+
+      - name: Evaluate every machine
+        run: nix flake check
+
+      - name: Build the Z13 system
+        run: nix build .#nixosConfigurations.z13.config.system.build.toplevel --no-link --print-build-logs
