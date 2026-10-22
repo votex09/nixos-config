@@ -48,7 +48,7 @@ in {
     kdePackages.kdenlive
     godot
     onlyoffice-desktopeditors
-    audacity
+    # audacity # 4.0.0 fails to build against Qt 6.12 (qmlcachegen), 2026-10-22
     carla
 
     #--- System
