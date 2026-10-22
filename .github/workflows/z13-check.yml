@@ -28,4 +28,4 @@ jobs:
         run: nix flake check
 
       - name: Build the Z13 system
-        run: nix build .#nixosConfigurations.z13.config.system.build.toplevel --no-link --print-build-logs
+        run: nix build .#nixosConfigurations.z13.config.system.build.toplevel --no-link --print-build-logs --keep-going
